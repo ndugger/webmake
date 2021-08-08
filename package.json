@@ -1,0 +1,25 @@
+{
+  "name": "webmake",
+  "version": "1.0.0",
+  "description": "...",
+  "main": "pkg/index.js",
+  "repository": "https://github.com/ndugger/webmake.git",
+  "author": "Nick Dugger <ui.engineer@outlook.com>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "beautify": "^0.0.8",
+    "nanoid": "^3.1.23",
+    "node-html-parser": "^4.1.3",
+    "typescript": "^4.3.5",
+    "wbn": "^0.0.5"
+  },
+  "devDependencies": {
+    "@types/beautify": "^0.0.0",
+    "@types/node": "^16.4.10",
+    "ts-node": "^10.1.0"
+  },
+  "scripts": {
+    "webmake": "node -r ts-node/register cli/index.ts"
+  }
+}
