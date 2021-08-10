@@ -80,4 +80,59 @@ While some of these proposals are a good ways off from being implemented, I inte
 ### Web Bundles
 WebMake supports bundling and code splitting in the form of Web Bundles.
 
-#### WIP
+### Compiler API
+
+#### `CompilerProgram`
+```typescript
+import { CompilerProgram } from 'webmake'
+
+export function compile() {
+    const compiler = new CompilerProgram()
+}
+```
+
+#### `CompilerProgram.importIndex()`
+```typescript
+import { join } from 'path/posix'
+import { CompilerProgram } from 'webmake'
+
+export function compile() {
+    const compiler = new CompilerProgram()
+
+    compiler.importIndex(join('src', 'index.tsx'))
+}
+```
+
+#### `CompilerProgram.makeModules()`
+```typescript
+import { writeFileSync } from 'fs'
+import { join } from 'path/posix'
+import { CompilerProgram } from 'webmake'
+
+function compile() {
+    const compiler = new CompilerProgram()
+
+    compiler.importIndex(join('src', 'index.tsx'))
+
+    compiler.makeModules().forEach(htmlModule => {
+        writeFileSync(join('out', htmlModule.fileName), htmlModule.contents)
+    })
+}
+```
+
+#### `CompilerProgram.makeBundles()`
+```typescript
+import { writeFileSync } from 'fs'
+import { join } from 'path/posix'
+import { CompilerProgram } from 'webmake'
+
+export function compile() {
+    const compiler = new CompilerProgram()
+
+    compiler.importIndex(join('src', 'index.tsx'))
+
+    compiler.makeBundles().forEach(webBundle => {
+        writeFileSync(join('out', webBundle.fileName), webBundle.contents)
+    })
+}
+```
