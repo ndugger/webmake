@@ -82,35 +82,35 @@ WebMake supports bundling and code splitting in the form of Web Bundles.
 
 ### Compiler API
 
-#### `CompilerProgram`
+#### `ApplicationCompiler`
 ```typescript
-import { CompilerProgram } from 'webmake'
+import { ApplicationCompiler } from 'webmake'
 
 export function compile() {
-    const compiler = new CompilerProgram()
+    const compiler = new ApplicationCompiler()
 }
 ```
 
-#### `CompilerProgram.importIndex()`
+#### `ApplicationCompiler.importIndex()`
 ```typescript
 import { join } from 'path/posix'
-import { CompilerProgram } from 'webmake'
+import { ApplicationCompiler } from 'webmake'
 
 export function compile() {
-    const compiler = new CompilerProgram()
+    const compiler = new ApplicationCompiler()
 
     compiler.importIndex(join('src', 'index.tsx'))
 }
 ```
 
-#### `CompilerProgram.makeModules()`
+#### `ApplicationCompiler.makeModules()`
 ```typescript
 import { writeFileSync } from 'fs'
 import { join } from 'path/posix'
-import { CompilerProgram } from 'webmake'
+import { ApplicationCompiler } from 'webmake'
 
 function compile() {
-    const compiler = new CompilerProgram()
+    const compiler = new ApplicationCompiler()
 
     compiler.importIndex(join('src', 'index.tsx'))
 
@@ -120,14 +120,14 @@ function compile() {
 }
 ```
 
-#### `CompilerProgram.makeBundles()`
+#### `ApplicationCompiler.makeBundles()`
 ```typescript
 import { writeFileSync } from 'fs'
 import { join } from 'path/posix'
-import { CompilerProgram } from 'webmake'
+import { ApplicationCompiler } from 'webmake'
 
 export function compile() {
-    const compiler = new CompilerProgram()
+    const compiler = new ApplicationCompiler()
 
     compiler.importIndex(join('src', 'index.tsx'))
 
