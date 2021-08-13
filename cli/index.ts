@@ -1,6 +1,6 @@
 import { ApplicationCompiler } from '../src/ApplicationCompiler'
 
-const compiler = new ApplicationCompiler()
+const compiler = new ApplicationCompiler({ moduleCompatabilityTarget: 'mjs' })
 
 compiler.importIndex('demo/index.tsx')
 

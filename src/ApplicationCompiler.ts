@@ -1,10 +1,12 @@
 import { readFileSync } from 'fs'
 import { join } from 'path/posix'
 import { EventEmitter } from 'stream'
+import * as TypeScript from 'typescript'
 
 import { EphemeralFile } from './EphemeralFile'
 import { CodeModule } from './CodeModule'
 import { WebBundle } from './WebBundle'
+import { HTMLDocument } from './HTMLDocument'
 
 function flattenTree<Branch extends object>(root: Branch, key: keyof Branch): Branch[] {
     const flattened = [ root ]
@@ -22,8 +24,19 @@ export class ApplicationCompiler extends EventEmitter {
     public address?: string
     public index?: CodeModule
 
-    public manual = JSON.parse(readFileSync('webmake.json').toString())
-    public package = JSON.parse(readFileSync('package.json').toString())
+    public manual = JSON.parse(readFileSync('webmake.json').toString()) as ApplicationCompiler.Manual
+    public package = JSON.parse(readFileSync('package.json').toString()) as ApplicationCompiler.Package
+
+    public options: ApplicationCompiler.Options
+
+    public constructor(options?: Partial<ApplicationCompiler.Options>) {
+        super()
+
+        this.options = { 
+            ...ApplicationCompiler.defaultOptions, 
+            ...options
+        }
+    }
 
     public importIndex(fileName: string): CodeModule {
         return this.index = new CodeModule(this, undefined, '~', fileName).parse()
@@ -45,14 +58,13 @@ export class ApplicationCompiler extends EventEmitter {
     public makeBundles(address: string): WebBundle[] {
         const modules = this.makeModules()
         const masterBundle = new WebBundle('master', address)
-        const indexPayload = new EphemeralFile('/', 'text/html', `
-            <!doctype html>
+        const indexPayload = new EphemeralFile('/', 'text/html', new HTMLDocument(`
             <html>
                 <head>
-                    <script defer src="/index.html"></script>
+                    <script src="/index.html" type="module"></script>
                 </head>
             </html>
-        `)
+        `).toString('html'))
 
         masterBundle.addFile(indexPayload)
         modules.forEach(module => masterBundle.addFile(module))
@@ -70,7 +82,7 @@ export class ApplicationCompiler extends EventEmitter {
     }
 }
 
-export namespace CompilerProgram {
+export namespace ApplicationCompiler {
 
     export interface ImportMap {
         [ key: string ]: string
@@ -90,7 +102,15 @@ export namespace CompilerProgram {
         scopes: ScopeMap
     }
 
+    export interface Options extends TypeScript.CompilerOptions {
+        moduleCompatabilityTarget: 'mjs' | 'html'
+    }
+
     export interface Package {
         dependencies: object
+    }
+
+    export const defaultOptions: Options = {
+        moduleCompatabilityTarget: 'html'
     }
 }

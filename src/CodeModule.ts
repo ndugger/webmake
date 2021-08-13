@@ -45,17 +45,25 @@ export class CodeModule extends EphemeralFile {
         const script = new HTMLElement('script', {}, 'type="module"', parentNode)
 
         parentNode.appendChild(script)
-        
-        const transpiled = TypeScript.transpileModule(this.script.replace(/\n$/, ''), {
-            compilerOptions: {
-                module: TypeScript.ModuleKind.ESNext,
-                moduleResolution: TypeScript.ModuleResolutionKind.NodeJs,
-                target: TypeScript.ScriptTarget.ESNext
-            }
-        })
 
-        script.textContent = transpiled.outputText
-        this.contents = this.document.toString()
+        const moduleCompatabilityTarget = this.ownerProgram.options.moduleCompatabilityTarget
+        const compilerOptions: Partial<ApplicationCompiler.Options> = {
+            module: TypeScript.ModuleKind.ESNext,
+            target: TypeScript.ScriptTarget.ESNext,
+            jsx: TypeScript.JsxEmit.ReactJSX,
+            jsxImportSource: 'webmake',
+            types: [ 'webmake' ]
+        }
+        
+        const transpiled = TypeScript.transpileModule(this.script.replace(/\n$/, ''), { compilerOptions })
+
+        if (moduleCompatabilityTarget === 'html') {
+            script.textContent = transpiled.outputText
+            this.contents = this.document?.toString('html') ?? ''
+        }
+        else {
+            this.contents = transpiled.outputText
+        }
 
         this.childModules.forEach(module => module.compile())
         this.ownerProgram.emit('module-compile', this)
@@ -65,7 +73,11 @@ export class CodeModule extends EphemeralFile {
 
     public parse() {
         const printer = TypeScript.createPrinter({ newLine: TypeScript.NewLineKind.LineFeed })
-        const compiler = TypeScript.createProgram([ this.fileName ], { allowJs: true })
+        const compiler = TypeScript.createProgram([ this.fileName ], {
+            module: TypeScript.ModuleKind.ESNext,
+            target: TypeScript.ScriptTarget.ESNext,
+            jsx: TypeScript.JsxEmit.Preserve 
+        })
         const file = compiler.getSourceFile(this.fileName)
 
         TypeScript.forEachChild(file, node => {
@@ -84,7 +96,7 @@ export class CodeModule extends EphemeralFile {
                             fileName += join(popPath(this.fileName), alias)
 
                             if (!fileName.includes('.')) {
-                                fileName += '.tsx' // TODO make the extension dynamic by reading from fs
+                                fileName += '.tsx' // TODO make the extension dynamic by reading from fs (tsx, ts, jsx, js, mjs)
                             }
                         }
                         else {
@@ -100,7 +112,7 @@ export class CodeModule extends EphemeralFile {
             
             // Parse embedded HTML document
             if (TypeScript.isExpressionStatement(node)) {
-
+                
                 TypeScript.forEachChild(node, child => {
 
                     if (TypeScript.isJsxElement(child)) {
@@ -109,7 +121,15 @@ export class CodeModule extends EphemeralFile {
                             throw new Error('Module may only contain one embedded HTML document')
                         }
 
-                        this.document = new HTMLDocument(printer.printNode(TypeScript.EmitHint.Unspecified, node, file).replace(/;$/, ''))
+                        this.document = new HTMLDocument(printer.printNode(TypeScript.EmitHint.Unspecified, child, file).replace(/;$/, ''))
+
+                        if (this.ownerProgram.options.moduleCompatabilityTarget === 'mjs') {
+                            this.script += `import.meta.document = new DocumentFragment();` + '\n'
+                            this.script += `import.meta.document.append(${ this.document?.toString() ?? '' });` + '\n'
+                        }
+                    }
+                    else {
+                        this.script += printer.printNode(TypeScript.EmitHint.Unspecified, child, file) + '\n'
                     }
                 })
             }

@@ -19,6 +19,9 @@
     "@types/node": "^16.4.10",
     "ts-node": "^10.1.0"
   },
+  "exports": {
+    "./xdom": "./pkg/xdom.js"
+  },
   "scripts": {
     "webmake": "node -r ts-node/register cli/index.ts"
   }

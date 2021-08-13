@@ -17,7 +17,7 @@ export class HTMLDocument {
         this.root = parse(markup)
     }
 
-    public toString() {
-        return beautify('<!doctype html>' + this.root.outerHTML, { format: 'html' })
+    public toString(docType?: string) {
+        return beautify((docType ? `<!doctype ${ docType }>` : '') + this.root.outerHTML, { format: 'html' })
     }
 }
