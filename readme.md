@@ -3,7 +3,7 @@
 </p>
 
 # webmake
-WebMake is an experimental TypeScript -> HTML module compiler. It works by allowing you to embed an HTML document in your TypeScript modules, thanks to JSX. The detection of an embedded document will signal to the compiler to invert the code for the module by compiling the remaining TypeScript source code and placing the resulting JavaScript inside of a `<script type="module">` tag within the document. Sounds complicated, but it's absolutely not! Just take a look at the example below.
+WebMake is an experimental [TypeScript](https://www.typescriptlang.org/) -> [HTML module](https://github.com/WICG/webcomponents/blob/gh-pages/proposals/html-modules-explainer.md) compiler. It works by allowing you to embed an HTML document in your TypeScript modules, thanks to JSX. The detection of an embedded document will signal to the compiler to invert the code for the module by compiling the remaining TypeScript source code and placing the resulting JavaScript inside of a `<script type="module">` tag within the document. Sounds complicated, but it's absolutely not! Just take a look at the example below.
 
 **Input**: TypeScript Module
 ```tsx
