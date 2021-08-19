@@ -1,15 +1,15 @@
 <html>
-    <template name="button-component">
-        <div></div>
+    <template id="button-component">
+        <div>faking</div>
     </template>
 </html>
 
 export class Button extends HTMLElement {
 
-    #template = import.meta.document.getElementsByName('button-component').item(0)
+    #template = import.meta.document.getElementById('button-component')
     #shadow = this.attachShadow({ mode: 'closed' })
 
     public override connectedCallback() {
-        
+        this.#shadow.append(this.#template.content.cloneNode(true))
     }
 }

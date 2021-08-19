@@ -16,9 +16,13 @@
             }
         ]
     },
+    "files": [
+        "/assets"
+    ],
     "imports": {
-        "~/": "src/",
-        "xdom": "demo/library/xdom.ts"
+        
     },
-    "scopes": {}
+    "scopes": {
+
+    }
 }

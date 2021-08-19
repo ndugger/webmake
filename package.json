@@ -1,6 +1,6 @@
 {
   "name": "webmake",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "...",
   "main": "pkg/index.js",
   "repository": "https://github.com/ndugger/webmake.git",
@@ -16,13 +16,13 @@
   },
   "devDependencies": {
     "@types/beautify": "^0.0.0",
-    "@types/node": "^16.4.10",
+    "@types/node": "^16.6.2",
     "ts-node": "^10.1.0"
   },
   "exports": {
     "./xdom": "./pkg/xdom.js"
   },
   "scripts": {
-    "webmake": "node -r ts-node/register cli/index.ts"
+    "webmake": "node -r ts-node/register src/cli.ts"
   }
 }

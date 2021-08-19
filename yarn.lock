@@ -27,10 +27,10 @@
   resolved "https://registry.yarnpkg.com/@types/beautify/-/beautify-0.0.0.tgz#f9c7b8662b944543271495324649a43c239018b2"
   integrity sha512-6wljmoX+64LOAIEcmP4iTbFG31O3t5LoE7FNQVkZl2zGVyVPR2ZgxgBhTzGTTD98ab57tN5K5SKRJDjt6nUsDw==
 
-"@types/node@^16.4.10":
-  version "16.4.13"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.4.13.tgz#7dfd9c14661edc65cccd43a29eb454174642370d"
-  integrity sha512-bLL69sKtd25w7p1nvg9pigE4gtKVpGTPojBFLMkGHXuUgap2sLqQt2qUnqmVCDfzGUL0DRNZP+1prIZJbMeAXg==
+"@types/node@^16.6.2":
+  version "16.6.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.6.2.tgz#331b7b9f8621c638284787c5559423822fdffc50"
+  integrity sha512-LSw8TZt12ZudbpHc6EkIyDM3nHVWKYrAvGy6EAJfNfjusbwnThqjqxUKKRwuV3iWYeW/LYMzNgaq3MaLffQ2xA==
 
 abbrev@1:
   version "1.1.1"

@@ -18,8 +18,14 @@ export function jsxs(tag: string, properties: JSXSProperties): HTMLElement {
         element.setAttribute(attribute, attributes[ attribute ])
     }
 
-    for (const child of children) {
-        element.append(child)
+    for (const child of children) if (child) {
+
+        if (element.tagName.toLowerCase() === 'template') {
+            (element as HTMLTemplateElement).content.append(child)
+        }
+        else {
+            element.append(child)
+        }
     }
 
     return element
