@@ -81,58 +81,20 @@ While some of these proposals are a good ways off from being implemented, I inte
 WebMake supports bundling and code splitting in the form of Web Bundles.
 
 ### Compiler API
+Compiler was just rewritten to be more functional, documentation WIP
 
-#### `ApplicationCompiler`
 ```typescript
-import { ApplicationCompiler } from 'webmake'
+export async function webmake(path: string, compatabilityTarget = ModuleCompatabilityTarget.HTML): Promise<WebBundle> {
+    const pkgConfig = await readPackageConfig()
+    const appConfig = await readWebAppConfig()
+    const tscConfig = await readTypeScriptConfig()
 
-export function compile() {
-    const compiler = new ApplicationCompiler()
-}
-```
+    const staticAssets = await importStaticAssets(appConfig)
+    const dependencies = await importDependencies(pkgConfig, appConfig, tscConfig)
+    const projectIndex = await importIndexModule(path, dependencies)
 
-#### `ApplicationCompiler.importIndex()`
-```typescript
-import { join } from 'path/posix'
-import { ApplicationCompiler } from 'webmake'
+    const webModules = await compileModuleTree(projectIndex, compatabilityTarget, tscConfig)
 
-export function compile() {
-    const compiler = new ApplicationCompiler()
-
-    compiler.importIndex(join('src', 'index.tsx'))
-}
-```
-
-#### `ApplicationCompiler.makeModules()`
-```typescript
-import { writeFileSync } from 'fs'
-import { join } from 'path/posix'
-import { ApplicationCompiler } from 'webmake'
-
-function compile() {
-    const compiler = new ApplicationCompiler()
-
-    compiler.importIndex(join('src', 'index.tsx'))
-
-    compiler.makeModules().forEach(htmlModule => {
-        writeFileSync(join('out', htmlModule.fileName), htmlModule.contents)
-    })
-}
-```
-
-#### `ApplicationCompiler.makeBundles()`
-```typescript
-import { writeFileSync } from 'fs'
-import { join } from 'path/posix'
-import { ApplicationCompiler } from 'webmake'
-
-export function compile() {
-    const compiler = new ApplicationCompiler()
-
-    compiler.importIndex(join('src', 'index.tsx'))
-
-    compiler.makeBundles().forEach(webBundle => {
-        writeFileSync(join('out', webBundle.fileName), webBundle.contents)
-    })
+    return createWebBundle(appConfig, staticAssets, webModules)
 }
 ```
