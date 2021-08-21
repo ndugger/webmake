@@ -1,5 +1,5 @@
-import { readFile } from 'fs/promises'
-import { join, parse, dirname, normalize } from 'path/posix'
+import { readdir, readFile } from 'fs/promises'
+import { join, parse, dirname, normalize, basename } from 'path/posix'
 import * as TypeScript from 'typescript'
 import * as WebBn from 'wbn'
 
@@ -92,19 +92,30 @@ export function trimFileExtension(path: string): string {
     return path.replace('.' + path.split('.').pop() ?? '', '')
 }
 
+export const markupFileExtensions = [
+    '.html'
+]
+
+export const scriptFileExtensions = [
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.mjs',
+    '.cjs'
+]
+
+export const styleFileExtensions = [
+    '.css'
+]
+
 /**
  * Valid module file extensions
  */
 export const moduleFileExtensions = [ 
-    '.css', // TODO What does CSS module mean in this context?
-    '.html', 
-    '.js', 
-    '.jsx', 
-    '.mjs', 
-    '.cjs', 
-    '.ts', 
-    '.tsx', 
-    '.wasm' 
+    ...markupFileExtensions,
+    ...scriptFileExtensions,
+    ...styleFileExtensions 
 ] as const
 
 /**
@@ -170,7 +181,9 @@ export async function importDependencies(pkgConfig?: PackageConfig, appConfig?: 
     const dependencies: WebAppImportMap = {}
 
     if (appConfig) for (const from of Object.keys(appConfig.imports)) {
-        dependencies[ from ] = await importIndexModule(appConfig.imports[ from ])
+        dependencies[ from ] = appConfig.imports[ from ].startsWith('/') 
+            ? await importIndexModule(join(dirname(process.cwd()), appConfig.imports[ from ]))
+            : await importIndexModule(appConfig.imports[ from ])
     }
 
     if (tscConfig) for (const _from of Object.keys(tscConfig.compilerOptions.paths ?? {})) {
@@ -313,7 +326,17 @@ export async function parseImportDeclaration(parentModule: WebModule, node: Type
 }
 
 export async function guessFileExtension(path: string): Promise<string> {
-    return '.tsx' // TODO make the extension dynamic by reading from fs (tsx, ts, jsx, js, mjs)
+    const files = await readdir(dirname(path))
+
+    for (const file of files) {
+        const filePath = parse(file)
+
+        if (filePath.name === basename(path)) {
+            return filePath.ext
+        }
+    }
+
+    return '.tsx'
 }
 
 export async function findModuleFile(path: string, dependencies?: WebAppImportMap): Promise<string> {
@@ -329,54 +352,77 @@ export async function compileModuleTree(indexModule: WebModule, compatabilityTar
     const modules: WebModule[] = []
 
     for (const module of flattenModuleTree(indexModule)) {
-        const transpiled = TypeScript.transpileModule(module.content.toString(), {
-            compilerOptions: {
-                module: TypeScript.ModuleKind.ESNext,
-                target: TypeScript.ScriptTarget.ESNext,
-                jsx: TypeScript.JsxEmit.ReactJSX,
-                jsxImportSource: '/node_modules/webmake',
-                types: [ 'webmake' ]
-            }
-        })
 
-        modules.push({ ...module, content: transpiled.outputText })
+        if (module.fileName.startsWith('node_modules')) {
+            modules.push(module)
+        }
+        else if (styleFileExtensions.some(ext => module.fileName.endsWith(ext))) {
+            modules.push(await transpileStyle(module))
+        }
+        else if (scriptFileExtensions.some(ext => module.fileName.endsWith(ext))) {
+            modules.push(await transpileScript(module))
+        }
+        else {
+            throw new Error(`Unsupported module type: ${ module.fileName }`)
+        }
     }
 
     return modules
 }
 
-export async function createWebBundle(appConfig: WebAppConfig, staticFiles: EphemeralFile[], modules: WebModule[]): Promise<WebBundle> {
-    const primary = 'https://example.com/'
-    const imports = modules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), {
-        '/node_modules/webmake/jsx-runtime': '/src/jsx-runtime.ts'
+export async function transpileScript(module: WebModule): Promise<WebModule> {
+    const transpiled = TypeScript.transpileModule(module.content.toString(), {
+        compilerOptions: {
+            module: TypeScript.ModuleKind.ESNext,
+            target: TypeScript.ScriptTarget.ESNext,
+            jsx: TypeScript.JsxEmit.ReactJSX,
+            jsxImportSource: '/node_modules/webmake'
+        }
     })
-    const builder = new WebBn.BundleBuilder(primary)
-        .setManifestURL(primary + 'manifest.json')
-        .addExchange(primary, 200, { 'content-type': 'text/html' }, `
-            <!doctype html>
-            <html>
-                <head>
-                    <script type="importmap">
-                        ${ JSON.stringify({ imports }) }
-                    </script>
-                    <script type="module" src="demo/index.tsx"></script>
-                </head>
-            </html>
-        `)
 
-    const files = [
-        ...staticFiles,
-        ...modules
-    ]
+    return { 
+        ...module, 
+        content: transpiled.outputText 
+    }
+}
 
-    for (const file of files) {
-        builder.addExchange(primary + file.fileName, 200, { 'content-type': 'text/javascript' }, file.content)
+export async function transpileStyle(module: WebModule): Promise<WebModule> {
+    return {
+        ...module,
+        content: `
+            const css = new CSSStyleSheet();
+            css.replace(\`${ module.content }\`);
+            export default css;
+        `
+    }
+}
+
+export async function createWebBundle(appConfig: WebAppConfig, staticAssets: EphemeralFile[] = [], modules: WebModule[] = []): Promise<WebBundle> {
+    const primary = 'https://example.com/'
+    const imports = modules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), appConfig.imports)
+    const builder = new WebBn.BundleBuilder(primary).setManifestURL(primary + 'manifest.json').addExchange(primary, 200, { 'content-type': 'text/html' }, `
+        <!doctype html>
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <script type="importmap">${ JSON.stringify({ imports }) }</script>
+                <script type="module" src="${ modules[ 0 ]?.fileName }"></script>
+                <title>${ appConfig.manifest.name }</title>
+            </head>
+        </html>
+    `)
+
+    for (const module of modules) {
+        builder.addExchange(primary + module.fileName, 200, { 'content-type': 'text/javascript' }, module.content)
     }
 
     const bundle: WebBundle = {
         fileName: 'master.wbn',
         content: builder.createBundle(),
-        childFiles: files
+        childFiles: [
+            ...modules,
+            ...staticAssets
+        ]
     }
 
     return bundle

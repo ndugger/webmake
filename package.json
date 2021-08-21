@@ -16,13 +16,11 @@
   },
   "devDependencies": {
     "@types/beautify": "^0.0.0",
+    "@types/minify": "^6.0.1",
     "@types/node": "^16.6.2",
     "ts-node": "^10.1.0"
   },
-  "exports": {
-    "./xdom": "./pkg/xdom.js"
-  },
   "scripts": {
-    "webmake": "node -r ts-node/register src/cli.ts"
+    "webmake": "set TS_NODE_COMPILER_OPTIONS={\"module\":\"commonjs\"} && node --loader ts-node/esm src/cli.ts"
   }
 }

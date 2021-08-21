@@ -1,3 +1,7 @@
+interface AttributeMap {
+    [ key: string ]: string
+}
+
 interface JSXProperties {
     children: HTMLElement
 }
@@ -14,13 +18,16 @@ export function jsxs(tag: string, properties: JSXSProperties): HTMLElement {
     const element = document.createElement(tag)
     const { children, ...attributes } = properties
 
-    for (const attribute of Object.keys(attributes)) {
-        element.setAttribute(attribute, attributes[ attribute ])
+    for (const attribute in attributes) {
+        element.setAttribute(attribute, (attributes as AttributeMap)[ attribute ])
     }
 
     for (const child of children) if (child) {
 
-        if (element.tagName.toLowerCase() === 'template') {
+        if (typeof child === 'string') {
+            element.append(new Text(child))
+        }
+        else if (element.tagName.toLowerCase() === 'template') {
             (element as HTMLTemplateElement).content.append(child)
         }
         else {
@@ -29,4 +36,43 @@ export function jsxs(tag: string, properties: JSXSProperties): HTMLElement {
     }
 
     return element
+}
+
+declare global {
+
+    interface ImportMeta {
+        document?: Document | DocumentFragment
+    }
+
+    interface Element {
+        JSX_PROPERTY_TYPES_DO_NOT_USE: object
+    }
+
+    interface ShadowRoot {
+        adoptedStyleSheets: CSSStyleSheet[]
+    }
+
+    interface Text {
+        JSX_PROPERTY_TYPES_DO_NOT_USE: object
+    }
+
+    interface Document {
+        adoptedStyleSheets: CSSStyleSheet[]
+    }
+
+    interface CSSStyleSheet {
+        replace(value: string): Promise<void>
+        replaceSync(value: string): void
+    }
+
+    namespace JSX {
+        
+        interface IntrinsicElements {
+            [key: string]: any
+        }
+
+        interface ElementAttributesProperty {
+            JSX_PROPERTY_TYPES_DO_NOT_USE: typeof Element.prototype.JSX_PROPERTY_TYPES_DO_NOT_USE
+        }
+    }
 }
