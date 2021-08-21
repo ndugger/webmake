@@ -81,7 +81,7 @@ While some of these proposals are a good ways off from being implemented, I inte
 WebMake supports bundling and code splitting in the form of Web Bundles.
 
 ### Compiler API
-Compiler was just rewritten to be more functional, documentation WIP
+Compiler was just rewritten to be more functional, documentation WIP.
 
 ```typescript
 export async function webmake(path: string, compatabilityTarget = ModuleCompatabilityTarget.HTML): Promise<WebBundle> {
