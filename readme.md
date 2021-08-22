@@ -96,7 +96,7 @@ async function webmake(index: string, outputConfig: WebMake.OutputConfig): Promi
     
     const staticFiles = await WebMake.importStaticFiles(project)
     const indexModule = await WebMake.importIndexModule(project, index)
-    const codeModules = await WebMake.compileModuleTree(project, projectIndex)
+    const codeModules = await WebMake.compileModuleTree(project, indexModule)
 
     return WebMake.createWebBundle(project, staticFiles, codeModules)
 }
