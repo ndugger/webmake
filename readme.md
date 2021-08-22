@@ -88,7 +88,7 @@ import * as WebMake from 'webmake'
 
 export async function webmake(index: string, outputConfig: WebMake.OutputConfig): Promise<WebMake.WebBundle> {
     const project = { 
-        app: await WebMake.readWebAppConfig()WebMake.readPackageConfig(), 
+        app: await WebMake.readWebAppConfig(), 
         pkg: await WebMake.readPackageConfig(), 
         tsc: await WebMake.readTypeScriptConfig(),
         out: outputConfig
