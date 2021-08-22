@@ -53,7 +53,7 @@ customElements.define('index-page', IndexPage)
         </section>
     </template>
     <script type="module">
-        import "./custom-button";
+        import "/src/custom-button";
         export class IndexPage extends HTMLElement {
             #template = import.meta.document.getElementById("index-page");
             constructor() {
@@ -81,20 +81,25 @@ While some of these proposals are a good ways off from being implemented, I inte
 WebMake supports bundling and code splitting in the form of Web Bundles.
 
 ### Compiler API
-Compiler was just rewritten to be more functional, documentation WIP.
+Compiler was just rewritten to be more functional, documentation WIP. The following code produces a single WBN file from multiple modules and static assets:
 
 ```typescript
-export async function webmake(path: string, compatabilityTarget = ModuleCompatabilityTarget.HTML): Promise<WebBundle> {
-    const pkgConfig = await readPackageConfig()
-    const appConfig = await readWebAppConfig()
-    const tscConfig = await readTypeScriptConfig()
+export async function webmake(index: string, outputConfig: Partial<OutputConfig>): Promise<WebBundle> {
+    const project = { 
+        app: await readPackageConfig(), 
+        pkg: await readWebAppConfig(), 
+        tsc: await readTypeScriptConfig(),
+        out: { 
+            ...defaultOutputConfig, 
+            ...outputConfig 
+        }
+    }
 
-    const staticAssets = await importStaticAssets(appConfig)
-    const dependencies = await importDependencies(pkgConfig, appConfig, tscConfig)
-    const projectIndex = await importIndexModule(path, dependencies)
+    const staticAssets = await importStaticAssets(project)
+    const dependencies = await importDependencies(project)
+    const projectIndex = await importIndexModule(project, index, dependencies)
+    const compiledCode = await compileModuleTree(project, projectIndex)
 
-    const webModules = await compileModuleTree(projectIndex, compatabilityTarget, tscConfig)
-
-    return createWebBundle(appConfig, staticAssets, webModules)
+    return createWebBundle(project, staticAssets, compiledCode)
 }
 ```
