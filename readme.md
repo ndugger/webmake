@@ -89,12 +89,9 @@ export async function webmake(index: string, outputConfig: Partial<OutputConfig>
         app: await readPackageConfig(), 
         pkg: await readWebAppConfig(), 
         tsc: await readTypeScriptConfig(),
-        out: { 
-            ...defaultOutputConfig, 
-            ...outputConfig 
-        }
+        out: outputConfig
     }
-
+    
     const staticAssets = await importStaticAssets(project)
     const dependencies = await importDependencies(project)
     const projectIndex = await importIndexModule(project, index, dependencies)
