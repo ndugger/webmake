@@ -81,24 +81,23 @@ While some of these proposals are a good ways off from being implemented, I inte
 WebMake supports bundling and code splitting in the form of Web Bundles.
 
 ### Compiler API
-Compiler was just rewritten to be more functional, documentation is a WIP. The following code produces a single WBN file from multiple modules and static assets:
+Compiler was just rewritten to be more functional, documentation is a WIP. The following code produces a single WBN file from multiple modules and static files:
 
 ```typescript
 import * as WebMake from 'webmake'
 
 export async function webmake(index: string, outputConfig: WebMake.OutputConfig): Promise<WebMake.WebBundle> {
     const project = { 
-        app: await WebMake.readWebAppConfig(), 
+        app: await WebMake.readConfig(), 
         pkg: await WebMake.readPackageConfig(), 
         tsc: await WebMake.readTypeScriptConfig(),
         out: outputConfig
     }
     
-    const staticAssets = await WebMake.importStaticAssets(project)
-    const dependencies = await WebMake.importDependencies(project)
-    const projectIndex = await WebMake.importIndexModule(project, index, dependencies)
-    const compiledCode = await WebMake.compileModuleTree(project, projectIndex)
+    const staticFiles = await WebMake.importStaticFiles(project)
+    const indexModule = await WebMake.importIndexModule(project, index)
+    const codeModules = await WebMake.compileModuleTree(project, projectIndex)
 
-    return WebMake.createWebBundle(project, staticAssets, compiledCode)
+    return WebMake.createWebBundle(project, staticFiles, codeModules)
 }
 ```
