@@ -28,6 +28,25 @@ interface EphemeralFile {
     content: Buffer | string
 }
 
+interface WebBundle extends EphemeralFile {
+    parentBundle?: WebBundle
+    childFiles: EphemeralFile[]
+}
+
+interface WebModule extends EphemeralFile {
+    dynamic: boolean
+    parentModule?: WebModule
+    childModules: WebModule[]
+}
+
+interface ModuleImportMap {
+    [ key: string ]: WebModule
+}
+
+interface OutputConfig {
+    compatabilityTarget: `${ ModuleCompatabilityTarget }`
+}
+
 interface PackageConfig {
     name: string
     version: string
@@ -48,31 +67,23 @@ interface TypeScriptConfig {
     include: string[]
 }
 
-interface WebAppConfig {
+interface WebAppManifest {
+    name: string
+    description: string
+}
+
+interface WebMakeConfig {
     manifest: WebAppManifest
     files: string[]
     imports: Dictionary
     scopes: Dictionary
 }
 
-interface WebAppImportMap {
-    [ key: string ]: WebModule
-}
-
-interface WebAppManifest {
-    name: string
-    description: string
-}
-
-interface WebBundle extends EphemeralFile {
-    parentBundle?: WebBundle
-    childFiles: EphemeralFile[]
-}
-
-interface WebModule extends EphemeralFile {
-    dynamic: boolean
-    parentModule?: WebModule
-    childModules: WebModule[]
+interface WebProject {
+    app?: WebMakeConfig
+    pkg?: PackageConfig
+    tsc?: TypeScriptConfig
+    out?: OutputConfig
 }
 
 /**
@@ -82,20 +93,30 @@ interface WebModule extends EphemeralFile {
  */
 
 /**
- * Utility for flattening module tree
+ * Module compatability output targets
  */
-export function flattenModuleTree(indexModule: WebModule): WebModule[] {
-    return [ indexModule, ...indexModule.childModules.flatMap(flattenModuleTree) ]
+export enum ModuleCompatabilityTarget {
+    HTML = '.html',
+    JS = '.mjs'
 }
 
-export function trimFileExtension(path: string): string {
-    return path.replace('.' + path.split('.').pop() ?? '', '')
+/**
+ * Default output config
+ */
+export const defaultOutputConfig: OutputConfig = {
+    compatabilityTarget: ModuleCompatabilityTarget.JS
 }
 
+/**
+ * Valid markup file extensions
+ */
 export const markupFileExtensions = [
     '.html'
-]
+] as const
 
+/**
+ * Valid script file extensions
+ */
 export const scriptFileExtensions = [
     '.ts',
     '.tsx',
@@ -103,11 +124,14 @@ export const scriptFileExtensions = [
     '.jsx',
     '.mjs',
     '.cjs'
-]
+] as const
 
+/**
+ * Valid style sheet file extensions
+ */
 export const styleFileExtensions = [
     '.css'
-]
+] as const
 
 /**
  * Valid module file extensions
@@ -119,49 +143,74 @@ export const moduleFileExtensions = [
 ] as const
 
 /**
- * Module compatability compile targets
+ * Default app config file name
  */
-export enum ModuleCompatabilityTarget {
-    HTML = '.html',
-    JS = '.mjs'
+export const defaultAppConfigFileName = 'webmake.json'
+
+/**
+ * Default package config file name
+ */
+export const defaultPkgConfigFileName = 'package.json'
+
+/**
+ * Default TypeScript config file name
+ */
+export const defaultTscConfigFileName = 'tsconfig.json'
+
+/**
+ * Synchronously flatten a module tree into a 1-dimensional array
+ */
+export function flattenModuleTree(indexModule: WebModule): WebModule[] {
+    return [ indexModule, ...indexModule.childModules.flatMap(flattenModuleTree) ]
+}
+
+/**
+ * Synchronous utility for removing file extensions from a given path
+ */
+export function trimFileExtension(path: string): string {
+    return path.replace('.' + path.split('.').pop() ?? '', '')
 }
 
 /**
  * Asynchronously reads a webmake.json file into memory
  */
-export async function readWebAppConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, 'webmake.json') ?? 'webmake.json'): Promise<WebAppConfig> {
-    return readFile(path).then(buffer => JSON.parse(buffer.toString()) as WebAppConfig)
+export async function readWebAppConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, defaultAppConfigFileName)): Promise<WebMakeConfig> {
+    return readFile(path ?? defaultAppConfigFileName).then(buffer => JSON.parse(buffer.toString()) as WebMakeConfig)
 }
 
 /**
  * Asynchronously reads a package.json file into memory
  */
-export async function readPackageConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, 'package.json') ?? 'package.json'): Promise<PackageConfig> {
-    return readFile(path).then(buffer => JSON.parse(buffer.toString()) as PackageConfig)
+export async function readPackageConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, defaultPkgConfigFileName)): Promise<PackageConfig> {
+    return readFile(path ?? defaultPkgConfigFileName).then(buffer => JSON.parse(buffer.toString()) as PackageConfig)
 }
 
 /**
  * Asynchronously reads a tsconfig.json file into memory
  */
-export async function readTypeScriptConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, 'tsconfig.json') ?? 'tsconfig.json'): Promise<TypeScriptConfig> {
-    return readFile(path).then(buffer => JSON.parse(buffer.toString()) as TypeScriptConfig)
+export async function readTypeScriptConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, defaultTscConfigFileName)): Promise<TypeScriptConfig> {
+    return readFile(path ?? defaultTscConfigFileName).then(buffer => JSON.parse(buffer.toString()) as TypeScriptConfig)
 }
 
 /**
- * Asynchronously compiles a given index with app settings
+ * Compiles a given index with output settings
  */
-export async function webmake(path: string, compatabilityTarget = ModuleCompatabilityTarget.HTML): Promise<WebBundle> {
-    const pkgConfig = await readPackageConfig()
-    const appConfig = await readWebAppConfig()
-    const tscConfig = await readTypeScriptConfig()
+export async function webmake(index: string, outputConfig: Partial<OutputConfig> = {}): Promise<WebBundle> {
+    const project = { 
+        app: await readWebAppConfig(), 
+        pkg: await readPackageConfig(), 
+        tsc: await readTypeScriptConfig(),
+        out: { 
+            ...defaultOutputConfig, 
+            ...outputConfig 
+        }
+    }
 
-    const staticAssets = await importStaticAssets(appConfig)
-    const dependencies = await importDependencies(pkgConfig, appConfig, tscConfig)
-    const projectIndex = await importIndexModule(path, dependencies)
+    const staticFiles = await importStaticFiles(project)
+    const indexModule = await importIndexModule(project, index)
+    const codeModules = await compileModuleTree(project, indexModule)
 
-    const webModules = await compileModuleTree(projectIndex, compatabilityTarget, tscConfig)
-
-    return createWebBundle(appConfig, staticAssets, webModules)
+    return createWebBundle(project, staticFiles, codeModules)
 }
 
 /**
@@ -170,30 +219,30 @@ export async function webmake(path: string, compatabilityTarget = ModuleCompatab
  * ====================================================
  */
 
-export async function importStaticAssets(appConfig: WebAppConfig): Promise<EphemeralFile[]> {
+export async function importStaticFiles(project: WebProject): Promise<EphemeralFile[]> {
     return []
 }
 
 /**
  * Asynchronously imports a module tree from project dependencies
  */
-export async function importDependencies(pkgConfig?: PackageConfig, appConfig?: WebAppConfig, tscConfig?: TypeScriptConfig): Promise<WebAppImportMap> {
-    const dependencies: WebAppImportMap = {}
+export async function importDependencies(project: WebProject): Promise<ModuleImportMap> {
+    const dependencies: ModuleImportMap = {}
 
-    if (appConfig) for (const from of Object.keys(appConfig.imports)) {
-        dependencies[ from ] = appConfig.imports[ from ].startsWith('/') 
-            ? await importIndexModule(join(dirname(process.cwd()), appConfig.imports[ from ]))
-            : await importIndexModule(appConfig.imports[ from ])
+    if (project.app) for (const from of Object.keys(project.app.imports)) {
+        dependencies[ from ] = project.app.imports[ from ].startsWith('/') 
+            ? await importIndexModule(project, join(dirname(process.cwd()), project.app.imports[ from ]))
+            : await importIndexModule(project, project.app.imports[ from ])
     }
 
-    if (tscConfig) for (const _from of Object.keys(tscConfig.compilerOptions.paths ?? {})) {
+    if (project.tsc) for (const _from of Object.keys(project.tsc.compilerOptions.paths ?? {})) {
         // TODO
     }
 
-    if (pkgConfig) for (const from of Object.keys(pkgConfig.dependencies ?? {})) {
+    if (project.pkg) for (const from of Object.keys(project.pkg.dependencies ?? {})) {
         const dependencyDirectory = join(dirname(process.cwd()), 'node_modules', from)
-        const dependencyPkgConfig = await readPackageConfig(TypeScript.findConfigFile(dependencyDirectory, TypeScript.sys.fileExists, 'package.json'))
-        const dependencyDependencies = await importDependencies(dependencyPkgConfig)
+        const dependencyPkgConfig = await readPackageConfig(TypeScript.findConfigFile(dependencyDirectory, TypeScript.sys.fileExists, defaultPkgConfigFileName))
+        const dependencyDependencies = await importDependencies({ pkg: dependencyPkgConfig })
         const dependencyMain = dependencyPkgConfig.module
             ? [ '.js', '.mjs' ].some(ext => dependencyPkgConfig.module?.endsWith(ext)) // TODO
                 ? dependencyPkgConfig.module // sorry
@@ -204,10 +253,10 @@ export async function importDependencies(pkgConfig?: PackageConfig, appConfig?: 
                     : dependencyPkgConfig.main + '.js' 
                 : 'index.js'
 
-        dependencies[ from ] = await importIndexModule(join(dependencyDirectory, dependencyMain), dependencyDependencies)
+        dependencies[ from ] = await importIndexModule(project, join(dependencyDirectory, dependencyMain), dependencyDependencies)
     }
-
-    dependencies[ 'webmake/jsx-runtime' ] = await importIndexModule(join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'))
+    
+    dependencies[ 'webmake/jsx-runtime' ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'))
 
     return dependencies
 }
@@ -215,7 +264,7 @@ export async function importDependencies(pkgConfig?: PackageConfig, appConfig?: 
 /**
  * Asynchronously imports a module tree given an entry path
  */
-export async function importWebModule(parentModule: WebModule | undefined, path: string, dependencies?: WebAppImportMap): Promise<WebModule> {
+export async function importWebModule(project: WebProject, parentModule: WebModule | undefined, path: string, dependencies: ModuleImportMap = {}): Promise<WebModule> {
     const printer = TypeScript.createPrinter({ newLine: TypeScript.NewLineKind.LineFeed })
     const srcFile = TypeScript.createSourceFile(path, (await readFile(path)).toString(), TypeScript.ScriptTarget.ESNext) // program.getSourceFile(path)
 
@@ -238,11 +287,11 @@ export async function importWebModule(parentModule: WebModule | undefined, path:
             if (TypeScript.isImportDeclaration(node)) {
                 const importDeclaration = await parseImportDeclaration(module, node, srcFile, dependencies)
 
-                if (dependencies && importDeclaration.from in dependencies) {
+                if (importDeclaration.from in dependencies) {
                     module.childModules.push(dependencies[ importDeclaration.from ])
                 }
                 else if (importDeclaration.fileName) {
-                    module.childModules.push(await importWebModule(module, importDeclaration.fileName, dependencies))
+                    module.childModules.push(await importWebModule(project, module, importDeclaration.fileName, dependencies))
                 }
 
                 module.content += importDeclaration.declaration + '\n'
@@ -282,11 +331,11 @@ export async function importWebModule(parentModule: WebModule | undefined, path:
 /**
  * Asynchronously imports a module tree from its index
  */
-export async function importIndexModule(path: string, dependencies?: WebAppImportMap): Promise<WebModule> {
-    return importWebModule(void 0, path, dependencies)
+export async function importIndexModule(project: WebProject, path: string, dependencies?: ModuleImportMap): Promise<WebModule> {
+    return importWebModule(project, void 0, path, dependencies ?? await importDependencies(project))
 }
 
-export async function parseImportDeclaration(parentModule: WebModule, node: TypeScript.ImportDeclaration, srcFile: TypeScript.SourceFile, dependencies?: WebAppImportMap): Promise<ParsedImportDeclaration> {
+export async function parseImportDeclaration(parentModule: WebModule, node: TypeScript.ImportDeclaration, srcFile: TypeScript.SourceFile, dependencies?: ModuleImportMap): Promise<ParsedImportDeclaration> {
     const importDeclaration: ParsedImportDeclaration = {
         declaration: '',
         fileName: '',
@@ -339,7 +388,7 @@ export async function guessFileExtension(path: string): Promise<string> {
     return '.tsx'
 }
 
-export async function findModuleFile(path: string, dependencies?: WebAppImportMap): Promise<string> {
+export async function findModuleFile(path: string, dependencies?: ModuleImportMap): Promise<string> {
 
     if (dependencies && path in dependencies) {
         return dependencies[ path ].fileName
@@ -348,7 +397,7 @@ export async function findModuleFile(path: string, dependencies?: WebAppImportMa
     return ''
 }
 
-export async function compileModuleTree(indexModule: WebModule, compatabilityTarget: ModuleCompatabilityTarget, tscConfig?: TypeScriptConfig): Promise<WebModule[]> {
+export async function compileModuleTree(project: WebProject, indexModule: WebModule): Promise<WebModule[]> {
     const modules: WebModule[] = []
 
     for (const module of flattenModuleTree(indexModule)) {
@@ -371,18 +420,16 @@ export async function compileModuleTree(indexModule: WebModule, compatabilityTar
 }
 
 export async function transpileScript(module: WebModule): Promise<WebModule> {
-    const transpiled = TypeScript.transpileModule(module.content.toString(), {
-        compilerOptions: {
-            module: TypeScript.ModuleKind.ESNext,
-            target: TypeScript.ScriptTarget.ESNext,
-            jsx: TypeScript.JsxEmit.ReactJSX,
-            jsxImportSource: '/node_modules/webmake'
-        }
-    })
-
     return { 
         ...module, 
-        content: transpiled.outputText 
+        content: TypeScript.transpileModule(module.content.toString(), {
+            compilerOptions: {
+                module: TypeScript.ModuleKind.ESNext,
+                target: TypeScript.ScriptTarget.ESNext,
+                jsx: TypeScript.JsxEmit.ReactJSX,
+                jsxImportSource: '/node_modules/webmake'
+            }
+        }).outputText 
     }
 }
 
@@ -397,9 +444,9 @@ export async function transpileStyle(module: WebModule): Promise<WebModule> {
     }
 }
 
-export async function createWebBundle(appConfig: WebAppConfig, staticAssets: EphemeralFile[] = [], modules: WebModule[] = []): Promise<WebBundle> {
-    const primary = 'https://example.com/'
-    const imports = modules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), appConfig.imports)
+export async function createWebBundle(project: WebProject, staticAssets: EphemeralFile[] = [], modules: WebModule[] = []): Promise<WebBundle> {
+    const primary = 'http://localhost/'
+    const imports = modules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), project.app?.imports ?? {})
     const builder = new WebBn.BundleBuilder(primary).setManifestURL(primary + 'manifest.json').addExchange(primary, 200, { 'content-type': 'text/html' }, `
         <!doctype html>
         <html>
@@ -407,7 +454,7 @@ export async function createWebBundle(appConfig: WebAppConfig, staticAssets: Eph
                 <meta charset="utf-8"/>
                 <script type="importmap">${ JSON.stringify({ imports }) }</script>
                 <script type="module" src="${ modules[ 0 ]?.fileName }"></script>
-                <title>${ appConfig.manifest.name }</title>
+                <title>${ project.app?.manifest?.name }</title>
             </head>
         </html>
     `)
