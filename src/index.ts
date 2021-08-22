@@ -174,7 +174,7 @@ export function trimFileExtension(path: string): string {
 /**
  * Asynchronously reads a webmake.json file into memory
  */
-export async function readWebAppConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, defaultAppConfigFileName)): Promise<WebMakeConfig> {
+export async function readConfig(path = TypeScript.findConfigFile(dirname(process.cwd()), TypeScript.sys.fileExists, defaultAppConfigFileName)): Promise<WebMakeConfig> {
     return readFile(path ?? defaultAppConfigFileName).then(buffer => JSON.parse(buffer.toString()) as WebMakeConfig)
 }
 
@@ -197,12 +197,12 @@ export async function readTypeScriptConfig(path = TypeScript.findConfigFile(dirn
  */
 export async function webmake(index: string, outputConfig: Partial<OutputConfig> = {}): Promise<WebBundle> {
     const project = { 
-        app: await readWebAppConfig(), 
+        app: await readConfig(), 
         pkg: await readPackageConfig(), 
         tsc: await readTypeScriptConfig(),
         out: { 
-            ...defaultOutputConfig, 
-            ...outputConfig 
+            ...defaultOutputConfig,
+            ...outputConfig
         }
     }
 
