@@ -158,6 +158,11 @@ export const defaultPkgConfigFileName = 'package.json'
 export const defaultTscConfigFileName = 'tsconfig.json'
 
 /**
+ * Convenient string for referencing the node_modules dir
+ */
+export const nodeModulesDirName = 'node_modules'
+
+/**
  * Synchronously flatten a module tree into a 1-dimensional array
  */
 export function flattenModuleTree(indexModule: WebModule): WebModule[] {
@@ -231,8 +236,8 @@ export async function importDependencies(project: WebProject): Promise<ModuleImp
 
     if (project.app) for (const from of Object.keys(project.app.imports)) {
         dependencies[ from ] = project.app.imports[ from ].startsWith('/') 
-            ? await importIndexModule(project, join(dirname(process.cwd()), project.app.imports[ from ]))
-            : await importIndexModule(project, project.app.imports[ from ])
+            ? await importIndexModule(project, join(dirname(process.cwd()), project.app.imports[ from ]), {})
+            : await importIndexModule(project, project.app.imports[ from ], {})
     }
 
     if (project.tsc) for (const _from of Object.keys(project.tsc.compilerOptions.paths ?? {})) {
@@ -240,7 +245,7 @@ export async function importDependencies(project: WebProject): Promise<ModuleImp
     }
 
     if (project.pkg) for (const from of Object.keys(project.pkg.dependencies ?? {})) {
-        const dependencyDirectory = join(dirname(process.cwd()), 'node_modules', from)
+        const dependencyDirectory = join(dirname(process.cwd()), nodeModulesDirName, from)
         const dependencyPkgConfig = await readPackageConfig(TypeScript.findConfigFile(dependencyDirectory, TypeScript.sys.fileExists, defaultPkgConfigFileName))
         const dependencyDependencies = await importDependencies({ pkg: dependencyPkgConfig })
         const dependencyMain = dependencyPkgConfig.module
@@ -256,7 +261,7 @@ export async function importDependencies(project: WebProject): Promise<ModuleImp
         dependencies[ from ] = await importIndexModule(project, join(dependencyDirectory, dependencyMain), dependencyDependencies)
     }
     
-    dependencies[ 'webmake/jsx-runtime' ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'))
+    dependencies[ 'webmake/jsx-runtime' ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'), {})
 
     return dependencies
 }
@@ -294,7 +299,7 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
                     module.childModules.push(await importWebModule(project, module, importDeclaration.fileName, dependencies))
                 }
 
-                module.content += importDeclaration.declaration + '\n'
+                module.content += importDeclaration.declaration
             }
             else if (TypeScript.isExpressionStatement(node)) {
 
@@ -309,18 +314,16 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
                         if (dependencies && dependencies[ 'webmake/jsx-runtime' ]) {
                             module.childModules.push(dependencies[ 'webmake/jsx-runtime' ])
                         }
-
-                        module.content += 'import.meta.document = new DocumentFragment();' + '\n'
-                        module.content += 'import.meta.document.append(' + node.getText(srcFile) + ');' + '\n'
-                        module.content += 'export default import.meta.document;'
+                        
+                        module.content += await printImportMetaDocument(node.getText(srcFile))
                     }
                     else {
-                        module.content += printer.printNode(TypeScript.EmitHint.Unspecified, child, srcFile) + '\n'
+                        module.content += printer.printNode(TypeScript.EmitHint.Unspecified, child, srcFile)
                     }
                 }
             }
             else {
-                module.content += printer.printNode(TypeScript.EmitHint.Unspecified, node, srcFile) + '\n'
+                module.content += printer.printNode(TypeScript.EmitHint.Unspecified, node, srcFile)
             }
         }
     }
@@ -367,11 +370,19 @@ export async function parseImportDeclaration(parentModule: WebModule, node: Type
             importDeclaration.declaration += `"/${ trimFileExtension(importDeclaration.fileName) }";`
         }
         else {
-            importDeclaration.declaration += `${ child.getText(srcFile) } `
+            importDeclaration.declaration += child.getText(srcFile) + ' '
         }
     }
 
     return importDeclaration
+}
+
+export async function printImportMetaDocument(jsx: string): Promise<string> {
+    return `
+        import.meta.document = new DocumentFragment();
+        import.meta.document.append(${ jsx });
+        export default import.meta.document;
+    `
 }
 
 export async function guessFileExtension(path: string): Promise<string> {
@@ -402,7 +413,7 @@ export async function compileModuleTree(project: WebProject, indexModule: WebMod
 
     for (const module of flattenModuleTree(indexModule)) {
 
-        if (module.fileName.startsWith('node_modules')) {
+        if (module.fileName.startsWith(nodeModulesDirName)) {
             modules.push(module)
         }
         else if (styleFileExtensions.some(ext => module.fileName.endsWith(ext))) {
@@ -427,7 +438,7 @@ export async function transpileScript(module: WebModule): Promise<WebModule> {
                 module: TypeScript.ModuleKind.ESNext,
                 target: TypeScript.ScriptTarget.ESNext,
                 jsx: TypeScript.JsxEmit.ReactJSX,
-                jsxImportSource: '/node_modules/webmake'
+                jsxImportSource: `/${ nodeModulesDirName }/webmake`
             }
         }).outputText 
     }
@@ -444,22 +455,22 @@ export async function transpileStyle(module: WebModule): Promise<WebModule> {
     }
 }
 
-export async function createWebBundle(project: WebProject, staticAssets: EphemeralFile[] = [], modules: WebModule[] = []): Promise<WebBundle> {
+export async function createWebBundle(project: WebProject, staticFiles: EphemeralFile[] = [], codeModules: WebModule[] = []): Promise<WebBundle> {
     const primary = 'http://localhost/'
-    const imports = modules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), project.app?.imports ?? {})
+    const imports = codeModules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), project.app?.imports ?? {})
     const builder = new WebBn.BundleBuilder(primary).setManifestURL(primary + 'manifest.json').addExchange(primary, 200, { 'content-type': 'text/html' }, `
         <!doctype html>
         <html>
             <head>
                 <meta charset="utf-8"/>
                 <script type="importmap">${ JSON.stringify({ imports }) }</script>
-                <script type="module" src="${ modules[ 0 ]?.fileName }"></script>
+                <script type="module" src="${ codeModules[ 0 ]?.fileName }"></script>
                 <title>${ project.app?.manifest?.name }</title>
             </head>
         </html>
     `)
 
-    for (const module of modules) {
+    for (const module of codeModules) {
         builder.addExchange(primary + module.fileName, 200, { 'content-type': 'text/javascript' }, module.content)
     }
 
@@ -467,8 +478,8 @@ export async function createWebBundle(project: WebProject, staticAssets: Ephemer
         fileName: 'master.wbn',
         content: builder.createBundle(),
         childFiles: [
-            ...modules,
-            ...staticAssets
+            ...codeModules,
+            ...staticFiles
         ]
     }
 
