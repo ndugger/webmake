@@ -87,9 +87,9 @@ Compiler was just rewritten to be more functional, documentation is a WIP. The f
 import * as WebMake from 'webmake'
 
 async function webmake(index: string, outputConfig: WebMake.OutputConfig): Promise<WebMake.WebBundle> {
-    const project = { 
-        app: await WebMake.readConfig(), 
-        pkg: await WebMake.readPackageConfig(), 
+    const project = {
+        app: await WebMake.readConfig(),
+        pkg: await WebMake.readPackageConfig(),
         tsc: await WebMake.readTypeScriptConfig(),
         out: outputConfig
     }

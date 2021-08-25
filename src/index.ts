@@ -1,4 +1,5 @@
-import { readdir, readFile } from 'fs/promises'
+import { Stats } from 'fs'
+import { readdir, readFile, stat } from 'fs/promises'
 import { join, parse, dirname, normalize, basename } from 'path/posix'
 import * as TypeScript from 'typescript'
 import * as WebBn from 'wbn'
@@ -163,6 +164,11 @@ export const defaultTscConfigFileName = 'tsconfig.json'
 export const nodeModulesDirName = 'node_modules'
 
 /**
+ * Convenient string for referencing the jsx-runtime
+ */
+export const jsxRuntimeName = 'webmake/jsx-runtime'
+
+/**
  * Synchronously flatten a module tree into a 1-dimensional array
  */
 export function flattenModuleTree(indexModule: WebModule): WebModule[] {
@@ -261,7 +267,9 @@ export async function importDependencies(project: WebProject): Promise<ModuleImp
         dependencies[ from ] = await importIndexModule(project, join(dependencyDirectory, dependencyMain), dependencyDependencies)
     }
     
-    dependencies[ 'webmake/jsx-runtime' ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'), {})
+    if (project.app) {
+        dependencies[ jsxRuntimeName ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'), {})
+    }
 
     return dependencies
 }
@@ -271,7 +279,7 @@ export async function importDependencies(project: WebProject): Promise<ModuleImp
  */
 export async function importWebModule(project: WebProject, parentModule: WebModule | undefined, path: string, dependencies: ModuleImportMap = {}): Promise<WebModule> {
     const printer = TypeScript.createPrinter({ newLine: TypeScript.NewLineKind.LineFeed })
-    const srcFile = TypeScript.createSourceFile(path, (await readFile(path)).toString(), TypeScript.ScriptTarget.ESNext) // program.getSourceFile(path)
+    const srcFile = TypeScript.createSourceFile(path, await readModuleFile(path), TypeScript.ScriptTarget.ESNext)
 
     if (!srcFile) {
         throw new Error('File not found')
@@ -311,8 +319,8 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
                             throw new Error('Only one top-level HTML document allowed in web modules')
                         }
 
-                        if (dependencies && dependencies[ 'webmake/jsx-runtime' ]) {
-                            module.childModules.push(dependencies[ 'webmake/jsx-runtime' ])
+                        if (dependencies && dependencies[ jsxRuntimeName ]) {
+                            module.childModules.push(dependencies[ jsxRuntimeName ])
                         }
                         
                         module.content += await printImportMetaDocument(node.getText(srcFile))
@@ -329,6 +337,44 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
     }
 
     return module
+}
+
+export async function readFileStats(path: string): Promise<Stats | undefined> {
+    try {
+        return await stat(path)
+    }
+    catch {
+        return void 0
+    }
+}
+
+export async function readModuleFile(path: string): Promise<string> {
+    const stats = await readFileStats(path)
+    let contents = ''
+    
+    if (!stats) {
+        return readModuleFile(dirname(path))
+    }
+    else if (stats.isDirectory()) {
+        const joined = join(path, 'index')
+        const ext = await guessFileExtension(joined)
+        const index = await readFile(joined + ext)
+        contents = index.toString()
+    }
+    else {
+        const file = await readFile(path)
+        contents = file.toString()
+    }
+
+    return contents.replace(/<!doctype.+?>/i, '')
+}
+
+export async function printImportMetaDocument(jsx: string): Promise<string> {
+    return `
+        import.meta.document = new DocumentFragment();
+        import.meta.document.append(${ jsx });
+        export default import.meta.document;
+    `
 }
 
 /**
@@ -354,10 +400,18 @@ export async function parseImportDeclaration(parentModule: WebModule, node: Type
                 const parentModulePath = parse(parentModule.fileName)
                 const joinedModulePath = join(parentModulePath.dir, importDeclaration.from)
 
-                importDeclaration.fileName = joinedModulePath
+                const ext = await guessFileExtension(joinedModulePath)
+                const stats = await readFileStats(joinedModulePath) ?? await readFileStats(joinedModulePath + ext)
 
-                if (!moduleFileExtensions.some(ext => importDeclaration.fileName.endsWith(ext))) {
-                    importDeclaration.fileName += await guessFileExtension(importDeclaration.fileName)
+                if (stats?.isDirectory()) {
+                    importDeclaration.fileName = join(joinedModulePath, 'index' + ext)
+                }
+                else {
+                    importDeclaration.fileName = joinedModulePath
+
+                    if (!moduleFileExtensions.some(ext => importDeclaration.fileName.endsWith(ext))) {
+                        importDeclaration.fileName += ext
+                    }
                 }
             }
             else if (dependencies) {
@@ -377,24 +431,33 @@ export async function parseImportDeclaration(parentModule: WebModule, node: Type
     return importDeclaration
 }
 
-export async function printImportMetaDocument(jsx: string): Promise<string> {
-    return `
-        import.meta.document = new DocumentFragment();
-        import.meta.document.append(${ jsx });
-        export default import.meta.document;
-    `
-}
+export async function guessFileExtension(path: string, base?: string): Promise<string> {
+    const stats = await readFileStats(path)
 
-export async function guessFileExtension(path: string): Promise<string> {
-    const files = await readdir(dirname(path))
+    if (!stats) {
+        return guessFileExtension(dirname(path), basename(path))
+    }
+
+    const files = await readdir(stats.isDirectory() ? path : dirname(path))
 
     for (const file of files) {
         const filePath = parse(file)
 
-        if (filePath.name === basename(path)) {
+        if (base && filePath.name === base) {
+            return filePath.ext
+        }
+
+        if (filePath.base === basename(path)) {
             return filePath.ext
         }
     }
+
+    const filePaths = files.map(parse)
+    const index = filePaths.find(path => path.name === 'index')
+
+    if (stats.isDirectory() && index) {
+        return index.ext
+    } 
 
     return '.tsx'
 }
@@ -416,6 +479,9 @@ export async function compileModuleTree(project: WebProject, indexModule: WebMod
         if (module.fileName.startsWith(nodeModulesDirName)) {
             modules.push(module)
         }
+        else if (markupFileExtensions.some(ext => module.fileName.endsWith(ext))) {
+            modules.push(await transpileMarkup(module))
+        }
         else if (styleFileExtensions.some(ext => module.fileName.endsWith(ext))) {
             modules.push(await transpileStyle(module))
         }
@@ -428,6 +494,12 @@ export async function compileModuleTree(project: WebProject, indexModule: WebMod
     }
 
     return modules
+}
+
+export async function transpileMarkup(module: WebModule): Promise<WebModule> {
+    return {
+        ...module
+    }
 }
 
 export async function transpileScript(module: WebModule): Promise<WebModule> {
@@ -463,9 +535,10 @@ export async function createWebBundle(project: WebProject, staticFiles: Ephemera
         <html>
             <head>
                 <meta charset="utf-8"/>
+                <title>${ project.app?.manifest?.name }</title>
+                <link rel="manifest" href="/manifest.json"/>
                 <script type="importmap">${ JSON.stringify({ imports }) }</script>
                 <script type="module" src="${ codeModules[ 0 ]?.fileName }"></script>
-                <title>${ project.app?.manifest?.name }</title>
             </head>
         </html>
     `)
