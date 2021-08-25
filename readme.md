@@ -14,7 +14,7 @@ import './custom-button'
         <section>
             <header>
                 <h1>
-                    Hello { name }
+                    Header
                 </h1>
             </header>
             <article>
@@ -45,7 +45,7 @@ customElements.define('index-page', IndexPage)
     <template id="index-page">
         <section>
             <header>
-                 <h1>Hello {{name}}</h1>
+                 <h1>Header</h1>
             </header>
             <article>
                 <custom-button>Lorem ipsum dolor sit amet...</custom-button>
