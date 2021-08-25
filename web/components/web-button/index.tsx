@@ -2,9 +2,13 @@ import WebComponent from '../../utilities/web-component'
 import getTemplate from '../../utilities/get-template'
 import webButtonStyle from './style'
 
+import '../web-text'
+
 <html>
     <template id="web-button">
-        <slot/>
+        <web-text>
+            <slot/>
+        </web-text>
     </template>
 </html>
 
