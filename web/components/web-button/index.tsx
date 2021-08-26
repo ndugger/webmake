@@ -1,25 +1,17 @@
 import WebComponent from '../../utilities/web-component'
 import getTemplate from '../../utilities/get-template'
-import webButtonStyle from './style'
 
 import '../web-text'
 
-<html>
-    <template id="web-button">
-        <web-text>
-            <slot/>
-        </web-text>
-    </template>
-</html>
+import webButtonDoc from './doc.html'
+import webButtonStyle from './style.css'
 
 export class WebButton extends WebComponent {
 
-    static get observedAttributes() {
-        return [ 'type' ]
-    }
+    static readonly observedAttributes = [ 'type' ]
 
     public constructor() {
-        super(getTemplate(import.meta.document, 'web-button'), [ webButtonStyle ])
+        super(getTemplate(webButtonDoc, 'web-button'), [ webButtonStyle ])
     }
 }
 

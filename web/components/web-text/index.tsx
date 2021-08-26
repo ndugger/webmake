@@ -1,6 +1,7 @@
 import getTemplate from '../../utilities/get-template'
 import WebComponent from '../../utilities/web-component'
-import webTextStyle from './style'
+
+import webTextStyle from './style.css'
 
 <html>
     <template id="web-text">
