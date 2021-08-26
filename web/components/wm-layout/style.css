@@ -1,0 +1,31 @@
+:host {
+    display: contents;
+}
+
+section.flex-layout {
+    display: flex;
+    flex-grow: 1;
+}
+
+nav {
+    background-color: var(--color-foreground);
+    height: 100%;
+    width: 96px;
+}
+
+main {
+    flex-grow: 1;
+    position: relative;
+}
+
+iframe {
+    border: none;
+    height: 100%;
+    width: 100%;
+}
+
+aside {
+    position: absolute;
+    right: 0;
+    top: 0;
+}

@@ -1,3 +1,6 @@
-import './components/web-button'
+import './components/wm-layout'
 
-document.body.append(<web-button>click me</web-button>)
+import themeStyle from './components/theme.css'
+
+document.adoptedStyleSheets = [ themeStyle ]
+document.body.append(<wm-layout></wm-layout>)
