@@ -241,9 +241,6 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
     if (!content) {
         throw new Error('Module not found')
     }
-
-    const printer = TypeScript.createPrinter({ newLine: TypeScript.NewLineKind.LineFeed })
-    const srcFile = TypeScript.createSourceFile(path + '.tsx', content, TypeScript.ScriptTarget.ESNext)
     
     const module: WebModule = {
         fileName: normalize(path),
@@ -252,6 +249,14 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
         childModules: [],
         parentModule
     }
+
+    if (constants.styleFileExtensions.some(ext => path.endsWith(ext))) {
+        module.content = content
+        return module
+    }
+
+    const printer = TypeScript.createPrinter({ newLine: TypeScript.NewLineKind.LineFeed })
+    const srcFile = TypeScript.createSourceFile(path + '.tsx', content, TypeScript.ScriptTarget.ESNext)
 
     for (const file of srcFile.getChildren()) {
 
