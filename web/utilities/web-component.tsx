@@ -1,11 +1,15 @@
 export default class WebComponent extends HTMLElement {
-
-    protected shadow: ShadowRoot
+    
+    protected template?: HTMLTemplateElement
+    protected styles?: CSSStyleSheet[]
 
     public constructor(template?: HTMLTemplateElement, adoptedStyleSheets: CSSStyleSheet[] = []) {
         super()
-        this.shadow = this.attachShadow({ mode: 'closed' })
-        this.shadow.adoptedStyleSheets = adoptedStyleSheets
-        this.shadow.append(template?.content?.cloneNode(true) ?? '')
+        
+        if (!this.shadowRoot) {
+            this.attachShadow({ mode: 'open' }).append(template?.content?.cloneNode(true) ?? '')
+        }
+        
+        (this.shadowRoot as ShadowRoot).adoptedStyleSheets = adoptedStyleSheets
     }
 }
