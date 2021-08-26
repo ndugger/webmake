@@ -20,6 +20,9 @@
         "paths": {
             "/src/*": [
                 "src/*"
+            ],
+            "webmake/runtime": [
+                "src/runtime.ts"
             ]
         }
     },

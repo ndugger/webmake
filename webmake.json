@@ -20,7 +20,8 @@
         "/assets"
     ],
     "imports": {
-        "/node_modules/webmake/jsx-runtime": "/src/jsx-runtime.ts"
+        "/node_modules/webmake/jsx-runtime": "/src/jsx-runtime.ts",
+        "/node_modules/webmake/runtime": "/src/runtime.ts"
     },
     "scopes": {
 

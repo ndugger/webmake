@@ -60,6 +60,8 @@ export const indexFileName = 'index'
  */
 export const jsxRuntimeName = `${ appName }/jsx-runtime` as const
 
+export const runtimeName = `${ appName }/runtime` as const
+
 /**
  * Convenient string for referencing the web manifest file name
  */

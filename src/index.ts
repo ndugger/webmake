@@ -225,6 +225,7 @@ export async function importDependencies(project: WebProject): Promise<ModuleImp
     
     if (project.app) {
         dependencies[ constants.jsxRuntimeName ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'jsx-runtime.ts'), {})
+        dependencies[ constants.runtimeName ] = await importIndexModule(project, join(dirname(process.cwd()), 'src', 'runtime.ts'), {})
     }
 
     return dependencies

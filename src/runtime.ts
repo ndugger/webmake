@@ -1,4 +1,14 @@
-export default class WebComponent extends HTMLElement {
+export function getTemplate(document: Document | DocumentFragment | undefined, id: string): HTMLTemplateElement | undefined {
+    const element = document?.getElementById(id)
+
+    if (!element) {
+        return void 0
+    }
+
+    return element as HTMLTemplateElement
+}
+
+export class WebComponent extends HTMLElement {
 
     public constructor(template?: HTMLTemplateElement, adoptedStyleSheets: CSSStyleSheet[] = []) {
         super()

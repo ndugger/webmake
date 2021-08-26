@@ -1,5 +1,4 @@
-import getTemplate from '../../utilities/get-template'
-import WebComponent from '../../utilities/web-component'
+import { WebComponent, getTemplate } from 'webmake/runtime'
 
 import webTextStyle from './style.css'
 
