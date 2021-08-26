@@ -46,8 +46,10 @@ interface ModuleImportMap {
     [ key: string ]: WebModule
 }
 
+type EnumString<Value extends string> = `${ Value }`
+
 interface OutputConfig {
-    compatabilityTarget: `${ ModuleCompatabilityTarget }`
+    compatabilityTarget: EnumString<ModuleCompatabilityTarget>
 }
 
 interface PackageConfig {
