@@ -12,7 +12,9 @@ export class WebComponent extends HTMLElement {
 
     public static readonly shadowTemplate = void 0 as HTMLTemplateElement | undefined
     public static readonly adoptedStyleSheets = [] as readonly CSSStyleSheet[]
+    public static readonly observedAttributes = [] as readonly string[]
 
+    public attributeChangedCallback(_name: string, _existing: string, _incoming: string) {}
     public connectedCallback() {}
 
     public constructor(template?: HTMLTemplateElement, adoptedStyleSheets?: CSSStyleSheet[]) {

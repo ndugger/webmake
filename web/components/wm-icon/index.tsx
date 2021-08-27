@@ -9,13 +9,23 @@ import iconStyle from './style.css'
 
 export class WebMakeIcon extends WebComponent {
 
-    public static readonly adoptedStyleSheets = [
+    public static override readonly adoptedStyleSheets = [
         iconStyle
     ] as const
 
-    public static readonly observedAttributes = [
+    public static override readonly observedAttributes = [
         'glyph'
     ] as const
+
+    public override attributeChangedCallback(name: string, existing: string, incoming: string) {
+
+        switch (name) {
+            case 'glyph':
+                this.clearIcon(existing)
+                this.renderIcon(incoming)
+                break
+        }
+    }
 
     private clearIcon(glyph: string) {
         this.shadowRoot?.getElementById(glyph)?.remove()
@@ -42,16 +52,6 @@ export class WebMakeIcon extends WebComponent {
         }
 
         this.shadowRoot?.append(icon.getElementById(glyph)?.cloneNode(true) ?? '')
-    }
-
-    public attributeChangedCallback(name: string, existing: string, incoming: string): void {
-
-        switch (name) {
-            case 'glyph':
-                this.clearIcon(existing)
-                this.renderIcon(incoming)
-                break
-        }
     }
 }
 
