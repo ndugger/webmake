@@ -1,39 +1,57 @@
-import { WebComponent, getTemplate } from 'webmake/runtime'
+import { WebComponent } from 'webmake/runtime'
 
-import activityIconDoc from './icons/activity.svg'
-import boxIconDoc from './icons/box.svg'
-import gitMergeIconDoc from './icons/git-merge.svg'
+import activityIcon from './icons/activity.svg'
+import boxIcon from './icons/box.svg'
+import gitMergeIcon from './icons/git-merge.svg'
+import packageIcon from './icons/package.svg'
 
 import iconStyle from './style.css'
 
 export class WebMakeIcon extends WebComponent {
 
+    public static readonly adoptedStyleSheets = [
+        iconStyle
+    ] as const
+
     public static readonly observedAttributes = [
         'glyph'
-    ]
+    ] as const
+
+    private clearIcon(glyph: string) {
+        this.shadowRoot?.getElementById(glyph)?.remove()
+    }
 
     private renderIcon(glyph: string) {
-        let iconDoc: XMLDocument | undefined
+        let icon: XMLDocument
 
         switch (glyph) {
-            case 'activity': iconDoc = activityIconDoc ;break
-            case 'box': iconDoc = boxIconDoc ;break
-            case 'git-merge': iconDoc = gitMergeIconDoc ;break
+            case 'activity':
+                icon = activityIcon
+                break
+            case 'box':
+                icon = boxIcon
+                break
+            case 'git-merge': 
+                icon = gitMergeIcon
+                break
+            case 'package':
+                icon = packageIcon
+                break
+            default:
+                icon = boxIcon
         }
 
-        this.shadowRoot?.append(iconDoc?.getElementById(glyph)?.cloneNode(true) ?? '')
+        this.shadowRoot?.append(icon.getElementById(glyph)?.cloneNode(true) ?? '')
     }
 
     public attributeChangedCallback(name: string, existing: string, incoming: string): void {
 
-        if (name === 'glyph') {
-            this.shadowRoot?.getElementById(existing)?.remove()
-            this.renderIcon(incoming)
+        switch (name) {
+            case 'glyph':
+                this.clearIcon(existing)
+                this.renderIcon(incoming)
+                break
         }
-    }
-
-    public constructor() {
-        super(getTemplate(import.meta.document, 'wm-icon'), [ iconStyle ])
     }
 }
 

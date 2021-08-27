@@ -10,7 +10,7 @@ section.flex-layout {
 nav {
     background-color: var(--color-foreground);
     height: 100%;
-    width: 72px;
+    width: 56px;
 }
 
 nav ul {
@@ -23,10 +23,10 @@ nav ul li {
     align-items: center;
     display: inline-flex;
     flex-direction: column;
-    height: 72px;
+    height: 56px;
     justify-content: center;
     padding: 0;
-    width: 72px;
+    width: 56px;
 }
 
 nav ul li:hover {
@@ -34,8 +34,9 @@ nav ul li:hover {
 }
 
 nav ul li span {
-    font-size: 0.66rem;
+    font-size: 0.5rem;
     margin-top: 5px;
+    opacity: 0.5;
     text-transform: uppercase;
 }
 

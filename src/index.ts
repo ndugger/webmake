@@ -513,6 +513,7 @@ export async function createWebBundle(project: WebProject, staticFiles: Ephemera
         <html>
             <head>
                 <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <title>${ project.app?.manifest?.name }</title>
                 <link rel="manifest" href="/${ constants.manifestConfigFileName }"/>
                 <script type="importmap">${ JSON.stringify({ imports }) }</script>

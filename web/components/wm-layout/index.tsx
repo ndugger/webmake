@@ -11,7 +11,7 @@ import webMakeLayoutStyle from './style.css'
             <nav role="navigation">
                 <ul>
                     <li>
-                        <wm-icon glyph="box"></wm-icon>
+                        <wm-icon glyph="package"></wm-icon>
                         <span>Project</span>
                     </li>
                     <li>
@@ -35,21 +35,13 @@ import webMakeLayoutStyle from './style.css'
 </html>
 
 export class WebMakeLayout extends WebComponent {
-    
-    public constructor() {
-        super(getTemplate(import.meta.document, 'wm-layout'), [
-            themeStyle,
-            webMakeLayoutStyle
-        ])
-    }
 
-    public connectedCallback() {
-        const iframe = this.shadowRoot?.querySelector('iframe') as HTMLIFrameElement
+    public static override readonly shadowTemplate = getTemplate(import.meta.document, 'wm-layout')
 
-        iframe.contentWindow?.addEventListener('message', message => {
-            console.log(message)
-        })
-    }
+    public static override readonly adoptedStyleSheets = [
+        themeStyle,
+        webMakeLayoutStyle
+    ] as const
 }
 
 customElements.define('wm-layout', WebMakeLayout)
