@@ -9,10 +9,23 @@ import webMakeLayoutStyle from './style.css'
     <template id="wm-layout">
         <section class="flex-layout">
             <nav role="navigation">
-                <wm-icon glyph="box"></wm-icon>
+                <ul>
+                    <li>
+                        <wm-icon glyph="box"></wm-icon>
+                        <span>Project</span>
+                    </li>
+                    <li>
+                        <wm-icon glyph="activity"></wm-icon>
+                        <span>Debug</span>
+                    </li>
+                    <li>
+                        <wm-icon glyph="git-merge"></wm-icon>
+                        <span>Git</span>
+                    </li>
+                </ul>
             </nav>
             <main role="main">
-                <iframe role="article"></iframe>
+                <iframe role="article" src="https://wikipedia.com/"></iframe>
                 <aside role="complementary">
                     ...
                 </aside>
@@ -34,7 +47,7 @@ export class WebMakeLayout extends WebComponent {
         const iframe = this.shadowRoot?.querySelector('iframe') as HTMLIFrameElement
 
         iframe.contentWindow?.addEventListener('message', message => {
-
+            console.log(message)
         })
     }
 }

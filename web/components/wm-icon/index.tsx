@@ -1,6 +1,9 @@
 import { WebComponent, getTemplate } from 'webmake/runtime'
 
+import activityIconDoc from './icons/activity.svg'
 import boxIconDoc from './icons/box.svg'
+import gitMergeIconDoc from './icons/git-merge.svg'
+
 import iconStyle from './style.css'
 
 export class WebMakeIcon extends WebComponent {
@@ -13,7 +16,9 @@ export class WebMakeIcon extends WebComponent {
         let iconDoc: XMLDocument | undefined
 
         switch (glyph) {
+            case 'activity': iconDoc = activityIconDoc ;break
             case 'box': iconDoc = boxIconDoc ;break
+            case 'git-merge': iconDoc = gitMergeIconDoc ;break
         }
 
         this.shadowRoot?.append(iconDoc?.getElementById(glyph)?.cloneNode(true) ?? '')

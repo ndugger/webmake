@@ -13,6 +13,32 @@ nav {
     width: 72px;
 }
 
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    align-items: center;
+    display: inline-flex;
+    flex-direction: column;
+    height: 72px;
+    justify-content: center;
+    padding: 0;
+    width: 72px;
+}
+
+nav ul li:hover {
+    background-color: rgb(255 255 255 / 10%);
+}
+
+nav ul li span {
+    font-size: 0.66rem;
+    margin-top: 5px;
+    text-transform: uppercase;
+}
+
 main {
     flex-grow: 1;
     position: relative;

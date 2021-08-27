@@ -4,8 +4,8 @@ import globalStyle from './components/global.css'
 import themeStyle from './components/theme.css'
 
 document.adoptedStyleSheets = [ 
-    globalStyle,
-    themeStyle
+    themeStyle,
+    globalStyle
 ]
 
 document.body.append(<wm-layout></wm-layout>)
