@@ -17,21 +17,11 @@ export class WebMakeIcon extends WebComponent {
         'glyph'
     ] as const
 
-    public override attributeChangedCallback(name: string, existing: string, incoming: string) {
-
-        switch (name) {
-            case 'glyph':
-                this.clearIcon(existing)
-                this.renderIcon(incoming)
-                break
-        }
-    }
-
-    private clearIcon(glyph: string) {
+    protected clearIcon(glyph: string) {
         this.shadowRoot?.getElementById(glyph)?.remove()
     }
 
-    private renderIcon(glyph: string) {
+    protected renderIcon(glyph: string) {
         let icon: XMLDocument
 
         switch (glyph) {
@@ -41,7 +31,7 @@ export class WebMakeIcon extends WebComponent {
             case 'box':
                 icon = boxIcon
                 break
-            case 'git-merge': 
+            case 'git-merge':
                 icon = gitMergeIcon
                 break
             case 'package':
@@ -52,6 +42,16 @@ export class WebMakeIcon extends WebComponent {
         }
 
         this.shadowRoot?.append(icon.getElementById(glyph)?.cloneNode(true) ?? '')
+    }
+
+    public override attributeChangedCallback(name: string, existing: string, incoming: string) {
+
+        switch (name) {
+            case 'glyph':
+                this.clearIcon(existing)
+                this.renderIcon(incoming)
+                break
+        }
     }
 }
 

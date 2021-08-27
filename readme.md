@@ -77,8 +77,41 @@ As web developers, we've decided to go the JS-first route, which opened a ton of
 
 While some of these proposals are a good ways off from being implemented, I intend to keep this tool up to date with the current direction of the specifications. The usefulness of this tool banks almost entirely on HTML modules, though, so that must be implemented before this tool can be taken seriously.
 
-### Web Bundles
+### File Bundles
 WebMake supports bundling and code splitting in the form of Web Bundles.
+
+### Code Modules
+WebMake treats most web-compatible resources as first class modules.
+
+#### TSX
+```ts
+import main, { secondary, tertiary } from './another-module'
+```
+As per the TypeScript compiler, you may import JS & TS modules containing JSX markup.
+
+#### HTML
+```ts
+import layout from './layout.html'
+```
+Importing an HTML document will result in a `Document | DocumentFragment` containing the DOM elements.
+
+#### CSS
+```ts
+import layoutStyle from './style.css'
+```
+Importing a CSS file will result in a `CSSStyleSheet` containing the style rules.
+
+#### SVG
+```ts
+import boxIcon from './icons/box.svg
+```
+Importing an SVG document will result in an `XMLDocument` containing the SVG elements.
+
+##### Others under consideration
+It's not clear how useful additional module types would be yet.
+- Images?
+- Media?
+- PDF?
 
 ### Compiler API
 Compiler was just rewritten to be more functional, documentation is a WIP. The following code produces a single WBN file from multiple modules and static files:
