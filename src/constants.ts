@@ -2,7 +2,8 @@
  * Valid markup file extensions
  */
  export const markupFileExtensions = [
-    '.html'
+    '.html',
+    '.svg'
 ] as const
 
 /**
@@ -13,6 +14,7 @@ export const scriptFileExtensions = [
     '.tsx',
     '.js',
     '.jsx',
+    '.json',
     '.mjs',
     '.cjs'
 ] as const

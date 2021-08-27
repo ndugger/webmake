@@ -10,6 +10,10 @@ interface JSXSProperties {
     children: HTMLElement[]
 }
 
+const svgTags = [
+    ''
+]
+
 export function jsx(tag: string, properties: JSXProperties): HTMLElement {
     return jsxs(tag, Object.assign(properties, { children: [ properties.children ] }))
 }

@@ -2,6 +2,7 @@
     "compilerOptions": {
         "allowJs": true,
         "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
         "baseUrl": ".",
         "declaration": true,
         "esModuleInterop": true,

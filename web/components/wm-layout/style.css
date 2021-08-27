@@ -10,7 +10,7 @@ section.flex-layout {
 nav {
     background-color: var(--color-foreground);
     height: 100%;
-    width: 96px;
+    width: 72px;
 }
 
 main {

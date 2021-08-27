@@ -238,7 +238,7 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
     let content = await readModuleFile(path)
 
     if (constants.markupFileExtensions.some(ext => path.endsWith(ext))) {
-        content = content.replace(/^<!doctype.+?>/i, '')
+        content = content.replace(/^\n?<\?xml.+?\?>\n?/i, '').replace(/^\n?<!doctype.+?>\n?/i, '')
     }
 
     if (!content) {
@@ -291,7 +291,7 @@ export async function importWebModule(project: WebProject, parentModule: WebModu
                             module.childModules.push(dependencies[ constants.jsxRuntimeName ])
                         }
                         
-                        module.content += await printImportMetaDocument(node.getText(srcFile))
+                        module.content += await printImportMetaDocument(module, node.getText(srcFile))
                     }
                     else {
                         module.content += printer.printNode(TypeScript.EmitHint.Unspecified, child, srcFile)
@@ -337,7 +337,16 @@ export async function readModuleFile(path: string): Promise<string> {
     return contents
 }
 
-export async function printImportMetaDocument(jsx: string): Promise<string> {
+export async function printImportMetaDocument(module: WebModule, jsx: string): Promise<string> {
+
+    if (module.fileName.endsWith('svg')) {
+        return `
+            const svg = new DOMParser();
+            import.meta.document = svg.parseFromString(\`${ jsx }\`, "image/svg+xml");
+            export default import.meta.document;
+        `
+    }
+
     return `
         import.meta.document = new DocumentFragment();
         import.meta.document.append(${ jsx });

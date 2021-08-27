@@ -1,0 +1,11 @@
+html, body {
+    background-color: var(--color-background);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+    overflow: auto;
+    padding: 0;
+    width: 100%;
+}
