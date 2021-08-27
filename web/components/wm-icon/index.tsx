@@ -20,7 +20,6 @@ export class WebMakeIcon extends WebComponent {
     }
 
     public attributeChangedCallback(name: string, existing: string, incoming: string): void {
-        console.log(name, existing, incoming)
 
         if (name === 'glyph') {
             this.shadowRoot?.getElementById(existing)?.remove()
