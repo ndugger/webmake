@@ -103,7 +103,7 @@ Importing a CSS file will result in a `CSSStyleSheet` containing the style rules
 
 #### SVG
 ```ts
-import boxIcon from './icons/box.svg
+import boxIcon from './icons/box.svg'
 ```
 Importing an SVG document will result in an `XMLDocument` containing the SVG elements.
 
