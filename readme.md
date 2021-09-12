@@ -81,7 +81,7 @@ While some of these proposals are a good ways off from being implemented, I inte
 Since HTML modules are not implemented by any browser yet, WebMake allows you to compile your modules to regular JavaScript as well. More information coming soon.
 
 ### File Bundles
-WebMake supports bundling and code splitting in the form of Web Bundles.
+WebMake will support bundling and code splitting in the form of Web Bundles.
 
 ### Code Modules
 WebMake treats most web-compatible resources as first class modules.
