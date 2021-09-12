@@ -1,11 +1,13 @@
 import { WebComponent } from 'webmake/runtime'
 
-import activityIcon from './icons/activity.svg'
-import boxIcon from './icons/box.svg'
-import gitMergeIcon from './icons/git-merge.svg'
-import packageIcon from './icons/package.svg'
-
+import glyphs from './glyphs'
 import iconStyle from './style.css'
+
+export type Glyph = keyof typeof glyphs
+
+export interface WebMakeIconAttributeMap {
+    glyph: Glyph
+}
 
 export class WebMakeIcon extends WebComponent {
 
@@ -17,40 +19,28 @@ export class WebMakeIcon extends WebComponent {
         'glyph'
     ] as const
 
-    protected clearIcon(glyph: string) {
+    protected clearIcon(glyph: Glyph) {
         this.shadowRoot?.getElementById(glyph)?.remove()
     }
 
-    protected renderIcon(glyph: string) {
-        let icon: XMLDocument
-
-        switch (glyph) {
-            case 'activity':
-                icon = activityIcon
-                break
-            case 'box':
-                icon = boxIcon
-                break
-            case 'git-merge':
-                icon = gitMergeIcon
-                break
-            case 'package':
-                icon = packageIcon
-                break
-            default:
-                icon = boxIcon
-        }
-
-        this.shadowRoot?.append(icon.getElementById(glyph)?.cloneNode(true) ?? '')
+    protected renderIcon(glyph: Glyph) {
+        this.shadowRoot?.append(glyphs[ glyph ].getElementById(glyph)?.cloneNode(true) ?? '')
     }
 
     public override attributeChangedCallback(name: string, existing: string, incoming: string) {
-
         switch (name) {
             case 'glyph':
-                this.clearIcon(existing)
-                this.renderIcon(incoming)
+                this.clearIcon(existing as Glyph)
+                this.renderIcon(incoming as Glyph)
                 break
+        }
+    }
+}
+
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'wm-icon': WebMakeIconAttributeMap
         }
     }
 }
