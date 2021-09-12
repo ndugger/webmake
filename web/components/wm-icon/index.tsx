@@ -27,12 +27,10 @@ export class WebMakeIcon extends WebComponent {
         this.shadowRoot?.append(glyphs[ glyph ].getElementById(glyph)?.cloneNode(true) ?? '')
     }
 
-    public override attributeChangedCallback(name: string, existing: string, incoming: string) {
-        switch (name) {
-            case 'glyph':
-                this.clearIcon(existing as Glyph)
-                this.renderIcon(incoming as Glyph)
-                break
+    public override attributeChangedCallback(name: keyof WebMakeIconAttributeMap, existing: string, incoming: string) {
+        if (name === 'glyph') {
+            this.clearIcon(existing as Glyph)
+            this.renderIcon(incoming as Glyph)
         }
     }
 }
