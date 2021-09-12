@@ -77,6 +77,9 @@ As web developers, we've decided to go the JS-first route, which opened a ton of
 
 While some of these proposals are a good ways off from being implemented, I intend to keep this tool up to date with the current direction of the specifications. The usefulness of this tool banks almost entirely on HTML modules, though, so that must be implemented before this tool can be taken seriously.
 
+### Module Compatability Mode
+Since HTML modules are not implemented by any browser yet, WebMake allows you to compile your modules to regular JavaScript as well. More information coming soon.
+
 ### File Bundles
 WebMake supports bundling and code splitting in the form of Web Bundles.
 
