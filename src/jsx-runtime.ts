@@ -10,10 +10,6 @@ interface JSXSProperties {
     children: HTMLElement[]
 }
 
-const svgTags = [
-    ''
-]
-
 export function jsx(tag: string, properties: JSXProperties): HTMLElement {
     return jsxs(tag, Object.assign(properties, { children: [ properties.children ] }))
 }
@@ -48,16 +44,8 @@ declare global {
         document?: Document | DocumentFragment
     }
 
-    interface Element {
-        JSX_PROPERTY_TYPES_DO_NOT_USE: object
-    }
-
     interface ShadowRoot {
         adoptedStyleSheets: CSSStyleSheet[]
-    }
-
-    interface Text {
-        JSX_PROPERTY_TYPES_DO_NOT_USE: object
     }
 
     interface Document {
@@ -73,10 +61,6 @@ declare global {
         
         interface IntrinsicElements {
             [key: string]: any
-        }
-
-        interface ElementAttributesProperty {
-            JSX_PROPERTY_TYPES_DO_NOT_USE: typeof Element.prototype.JSX_PROPERTY_TYPES_DO_NOT_USE
         }
     }
 }

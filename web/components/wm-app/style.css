@@ -1,8 +1,4 @@
 :host {
-    display: contents;
-}
-
-section.flex-layout {
     display: flex;
     flex-grow: 1;
 }
@@ -42,16 +38,19 @@ nav ul li span {
 
 main {
     flex-grow: 1;
+    padding: 12px;
     position: relative;
 }
 
 iframe {
     border: none;
+    border-radius: 6px;
     height: 100%;
     width: 100%;
 }
 
 aside {
+    display: none;
     position: absolute;
     right: 0;
     top: 0;

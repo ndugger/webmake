@@ -510,7 +510,7 @@ export async function createWebBundle(project: WebProject, staticFiles: Ephemera
     const imports = codeModules.reduce((map, module) => Object.assign(map, { [ '/' + trimFileExtension(module.fileName) ]: '/' + module.fileName }), project.app?.imports ?? {})
     const builder = new WebBn.BundleBuilder(primary).setManifestURL(primary + constants.manifestConfigFileName).addExchange(primary, 200, { 'content-type': 'text/html' }, `
         <!doctype html>
-        <html>
+        <html lang="en">
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
