@@ -2,9 +2,9 @@ import { WebComponent, getTemplate, cloneTemplate } from 'webmake/runtime'
 
 import '../wm-icon'
 
-import webMakeDebuggerDoc from './views/debugger.html'
-import webMakeGitManagerDoc from './views/git.html'
-import webMakeProjectDoc from './views/project.html'
+import webMakeAppDebuggerView from './views/debugger.html'
+import webMakeAppGitManagerView from './views/git.html'
+import webMakeAppProjectView from './views/project.html'
 import webMakeAppStyle from './style.css'
 
 <html lang="en">
@@ -54,7 +54,7 @@ export class WebMakeApp extends WebComponent {
     }
 
     protected renderDebugger() {
-        const debuggerTemplate = cloneTemplate(getTemplate(webMakeDebuggerDoc, 'debugger'))
+        const debuggerTemplate = cloneTemplate(getTemplate(webMakeAppDebuggerView, 'debugger'))
 
         if (!debuggerTemplate) {
             throw new Error('Unable to clone missing template: "debugger"')
@@ -72,7 +72,7 @@ export class WebMakeApp extends WebComponent {
     }
 
     protected renderGitManager() {
-        const gitManagerDoc = cloneTemplate(getTemplate(webMakeGitManagerDoc, 'git'))
+        const gitManagerDoc = cloneTemplate(getTemplate(webMakeAppGitManagerView, 'git'))
 
         if (!gitManagerDoc) {
             throw new Error('Unable to clone missing template: "git"')
@@ -82,7 +82,7 @@ export class WebMakeApp extends WebComponent {
     }
 
     protected renderProjectDetails() {
-        const projectDoc = cloneTemplate(getTemplate(webMakeProjectDoc, 'project'))
+        const projectDoc = cloneTemplate(getTemplate(webMakeAppProjectView, 'project'))
 
         if (!projectDoc) {
             throw new Error('Unable to clone missing template: "project"')
