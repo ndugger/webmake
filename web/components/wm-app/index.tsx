@@ -41,7 +41,7 @@ export class WebMakeApp extends WebComponent {
         return this.shadowRoot?.querySelector('nav')
     }
 
-    protected registerNavItems() {
+    protected registerNavigation() {
         const navItems = this.#nav?.querySelectorAll('li')
 
         if (!navItems) {
@@ -49,7 +49,7 @@ export class WebMakeApp extends WebComponent {
         }
 
         navItems.forEach(navItem => navItem.addEventListener('pointerdown', () => {
-            this.switchView(navItem.dataset.view)
+            this.#main?.replaceChildren(this.render(navItem.dataset.view))
         }))
     }
 
@@ -68,7 +68,7 @@ export class WebMakeApp extends WebComponent {
 
         iframe.src = 'http://localhost:' + this.getAttribute('port')
 
-        this.#main?.append(debuggerTemplate)
+        return debuggerTemplate
     }
 
     protected renderGitManager() {
@@ -78,7 +78,7 @@ export class WebMakeApp extends WebComponent {
             throw new Error('Unable to clone missing template: "git"')
         }
 
-        this.#main?.append(gitManagerDoc)
+        return gitManagerDoc
     }
 
     protected renderProjectDetails() {
@@ -88,22 +88,21 @@ export class WebMakeApp extends WebComponent {
             throw new Error('Unable to clone missing template: "project"')
         }
 
-        this.#main?.append(projectDoc)
+        return projectDoc
     }
 
-    protected switchView(view = 'debug') {
-        this.#main?.replaceChildren()
-
+    protected render(view = 'debug') {
         switch (view) {
             case 'debug': return this.renderDebugger()
             case 'project': return this.renderProjectDetails()
             case 'git': return this.renderGitManager()
+            default: return this.renderProjectDetails()
         }
     }
 
     protected override createdCallback() {
-        this.registerNavItems()
-        this.switchView()
+        this.registerNavigation()
+        this.#main?.replaceChildren(this.render())
     }
 }
 
